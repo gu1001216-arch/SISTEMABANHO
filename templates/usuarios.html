@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Usuários — Tratamento de Peças{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <h5 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-people-fill me-2"></i>Gerenciar usuários</h5>
+
+    {% if msg %}<div class="alert alert-success rounded-3 py-2 small"><i class="bi bi-check-circle-fill me-2"></i>{{ msg }}</div>{% endif %}
+
+    <div class="kpi-card mb-4">
+      <h6 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-person-plus-fill me-2"></i>Adicionar usuário</h6>
+      <form method="POST">
+        <input type="hidden" name="acao" value="adicionar">
+        <div class="row g-2">
+          <div class="col-6"><input class="form-control form-control-sm" name="novo_usuario" placeholder="Login" required autocapitalize="none"></div>
+          <div class="col-6"><input class="form-control form-control-sm" name="novo_nome" placeholder="Nome completo" required></div>
+          <div class="col-6"><input class="form-control form-control-sm" type="text" name="nova_senha" placeholder="Senha" required></div>
+          <div class="col-6">
+            <select class="form-select form-select-sm" name="novo_perfil">
+              <option value="prep">Operador de preparação</option>
+              <option value="lider">Líder</option>
+              <option value="banho">Operador de banho</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <div class="col-12"><button type="submit" class="btn-primary-custom w-100 rounded-3 py-2"><i class="bi bi-plus-circle me-1"></i>Adicionar</button></div>
+        </div>
+      </form>
+    </div>
+
+    <div class="kpi-card p-0 overflow-hidden">
+      <table class="tabela-historico">
+        <thead><tr><th>Login</th><th>Nome</th><th>Perfil</th><th>Senha</th><th>Ação</th></tr></thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td><strong>{{ u.login }}</strong></td>
+            <td>{{ u.nome }}</td>
+            <td><span class="badge-perfil-tab perfil-{{ u.perfil }}">{{ u.perfil }}</span></td>
+            <td>
+              <form method="POST" class="d-flex gap-1" style="min-width:170px;">
+                <input type="hidden" name="acao" value="senha">
+                <input type="hidden" name="usuario_senha" value="{{ u.login }}">
+                <input class="form-control form-control-sm" type="text" name="senha_nova" placeholder="Nova senha">
+                <button class="btn btn-sm btn-outline-primary" title="Trocar senha"><i class="bi bi-key-fill"></i></button>
+              </form>
+            </td>
+            <td>
+              {% if u.login != 'admin' %}
+              <form method="POST" style="display:inline;" onsubmit="return confirm('Remover {{ u.nome }}?');">
+                <input type="hidden" name="acao" value="remover">
+                <input type="hidden" name="usuario_remover" value="{{ u.login }}">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash-fill"></i></button>
+              </form>
+              {% else %}<span class="text-muted small">—</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

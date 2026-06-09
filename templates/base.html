@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Tratamento de Peças{% endblock %}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-dark navbar-custom sticky-top">
+  <div class="container-fluid">
+    <span class="navbar-brand fw-bold">
+      <i class="bi bi-bucket-fill me-2"></i>Tratamento de Peças
+    </span>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      {% if session.get('usuario') %}
+      <span class="badge-perfil">{{ session.get('perfil') }}</span>
+      <span class="text-white small d-none d-md-inline">{{ nome | default(session.get('nome')) }}</span>
+      {% if session.get('perfil') == 'admin' %}
+      <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline-light" title="Dashboard"><i class="bi bi-speedometer2"></i></a>
+      <a href="{{ url_for('admin_mestre') }}" class="btn btn-sm btn-outline-light" title="Lista Mestra"><i class="bi bi-table"></i></a>
+      <a href="{{ url_for('admin_usuarios') }}" class="btn btn-sm btn-outline-light" title="Usuários"><i class="bi bi-people-fill"></i></a>
+      <a href="{{ url_for('api_download_excel') }}" class="btn btn-sm btn-outline-light" title="Baixar Excel"><i class="bi bi-file-earmark-excel"></i></a>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light" title="Sair"><i class="bi bi-box-arrow-right"></i></a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+<div class="container-fluid py-3">
+  {% block content %}{% endblock %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Tratamento de Peças{% endblock %}
+{% block content %}
+
+<div class="row mb-3 g-3">
+  <div class="col-6 col-md-2"><div class="kpi-card"><div class="kpi-valor" id="kTotal">{{ total }}</div><div class="kpi-label"><i class="bi bi-check2-all me-1"></i>Concluídos</div></div></div>
+  <div class="col-6 col-md-2"><div class="kpi-card"><div class="kpi-valor" style="color:#fd7e14;" id="kAnd">{{ em_andamento }}</div><div class="kpi-label"><i class="bi bi-hourglass-split me-1"></i>Em andamento</div></div></div>
+  <div class="col-6 col-md-2"><div class="kpi-card"><div class="kpi-valor" style="color:#28a745;">{{ normais }}</div><div class="kpi-label"><i class="bi bi-check-circle me-1"></i>Normais</div></div></div>
+  <div class="col-6 col-md-2"><div class="kpi-card"><div class="kpi-valor" style="color:#dc3545;">{{ retrabalhos }}</div><div class="kpi-label"><i class="bi bi-arrow-repeat me-1"></i>Retrabalhos</div></div></div>
+  <div class="col-6 col-md-2"><div class="kpi-card"><div class="kpi-valor" style="color:#7b1fa2;">{{ media_prep }}</div><div class="kpi-label"><i class="bi bi-stopwatch me-1"></i>Méd. prep (min)</div></div></div>
+  <div class="col-6 col-md-2"><div class="kpi-card"><div class="kpi-valor" style="color:#2E75B6;">{{ media_banho }}</div><div class="kpi-label"><i class="bi bi-water me-1"></i>Méd. banho (min)</div></div></div>
+</div>
+
+<!-- Quadro de andamento em tempo real -->
+<div class="kpi-card mb-3" style="padding:16px 20px;">
+  <h6 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-diagram-3-fill me-2"></i>Andamento em tempo real</h6>
+  <div id="andamento" class="row g-2"><div class="text-muted small">Carregando…</div></div>
+</div>
+
+<div class="row mb-3 g-3">
+  <div class="col-md-6"><div class="kpi-card" style="padding:20px;"><h6 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-pie-chart-fill me-2"></i>Normal × Retrabalho</h6><canvas id="chartTipo" height="200"></canvas></div></div>
+  <div class="col-md-6"><div class="kpi-card" style="padding:20px;"><h6 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-bar-chart-fill me-2"></i>Por processo</h6><canvas id="chartProc" height="200"></canvas></div></div>
+</div>
+
+<!-- Histórico -->
+<div class="kpi-card mb-3" style="padding:14px 20px;">
+  <div class="row g-2">
+    <div class="col-12 col-md-5"><input type="text" id="filtroTexto" class="form-control form-control-sm" placeholder="🔍 Buscar cesto, OP, código, operador…"></div>
+    <div class="col-6 col-md-3"><select id="filtroTipo" class="form-select form-select-sm"><option value="">Todos os tipos</option><option>Normal</option><option>Retrabalho</option></select></div>
+    <div class="col-6 col-md-4"><select id="filtroProc" class="form-select form-select-sm"><option value="">Todos os processos</option>{% for p in processos %}<option>{{ p }}</option>{% endfor %}</select></div>
+  </div>
+</div>
+
+<div class="kpi-card p-0 overflow-hidden">
+  <div style="overflow-x:auto;">
+    <table class="tabela-historico" id="tabelaHist">
+      <thead><tr>
+        <th>#</th><th>Cesto</th><th>OP</th><th>Código</th><th>Descrição</th><th>Qtd</th>
+        <th>Processo</th><th>Tipo</th><th>Prep(min)</th><th>Banho(min)</th><th>Op. Prep</th><th>Op. Banho</th>
+      </tr></thead>
+      <tbody id="tbody">
+        {% for r in registros %}
+        <tr data-tipo="{{ r.tipo }}" data-proc="{{ r.processo }}"
+            data-txt="{{ (r.numero_cesto ~ ' ' ~ r.op ~ ' ' ~ r.codigo ~ ' ' ~ r.operador_prep ~ ' ' ~ r.operador_banho) | lower }}"
+            class="{{ 'linha-retrab' if r.tipo=='Retrabalho' else '' }}">
+          <td>{{ r.id }}</td><td><strong>{{ r.numero_cesto }}</strong></td><td>{{ r.op or '—' }}</td>
+          <td>{{ r.codigo or '—' }}</td><td><small>{{ r.descricao or '—' }}</small></td><td>{{ r.quantidade }}</td>
+          <td>{{ r.processo or '—' }}</td>
+          <td><span class="{{ 'badge-retrabalho' if r.tipo=='Retrabalho' else 'badge-normal' }}">{{ r.tipo }}</span></td>
+          <td><strong>{{ r.prep_minutos }}</strong></td><td><strong>{{ r.banho_minutos }}</strong></td>
+          <td><small>{{ r.operador_prep }}</small></td><td><small>{{ r.operador_banho }}</small></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="12" class="text-center text-muted py-4">Nenhum registro concluído ainda.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ESTADOS = {
+  PREPARANDO:{txt:'Preparando',cor:'#fd7e14',ic:'hourglass-split'},
+  AGUARDA_LIDER:{txt:'Aguarda líder',cor:'#7b1fa2',ic:'person-check'},
+  FILA_BANHO:{txt:'Fila do banho',cor:'#2E75B6',ic:'list-ol'},
+  EM_BANHO:{txt:'Em banho',cor:'#0d6efd',ic:'water'},
+};
+
+new Chart(document.getElementById('chartTipo'), {
+  type:'doughnut',
+  data:{labels:['Normal','Retrabalho'],datasets:[{data:[{{ normais }},{{ retrabalhos }}],backgroundColor:['#28a745','#dc3545'],borderWidth:0}]},
+  options:{plugins:{legend:{position:'bottom'}},cutout:'65%'}
+});
+new Chart(document.getElementById('chartProc'), {
+  type:'bar',
+  data:{labels:{{ por_processo.keys()|list|tojson }},datasets:[{data:{{ por_processo.values()|list|tojson }},backgroundColor:'#1F4E79',borderRadius:6}]},
+  options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+});
+
+async function atualizar(){
+  const r = await fetch('/api/dashboard/dados');
+  const j = await r.json();
+  document.getElementById('kTotal').textContent = j.total;
+  document.getElementById('kAnd').textContent = j.em_andamento;
+  const cont = document.getElementById('andamento');
+  if(!j.ativos.length){ cont.innerHTML='<div class="text-muted small">Nenhum cesto em andamento.</div>'; return; }
+  cont.innerHTML = j.ativos.map(c=>{
+    const e = ESTADOS[c.estado] || {txt:c.estado,cor:'#888',ic:'circle'};
+    return `<div class="col-6 col-md-3 col-xl-2">
+      <div class="and-item" style="border-left:4px solid ${e.cor};">
+        <div class="d-flex justify-content-between"><span class="cesto-num-sm">${c.numero_cesto}</span>
+        <i class="bi bi-${e.ic}" style="color:${e.cor};"></i></div>
+        <div class="small fw-bold" style="color:${e.cor};">${e.txt}</div>
+        <div class="small text-muted">${c.processo||'—'}</div>
+      </div></div>`;
+  }).join('');
+}
+atualizar();
+setInterval(atualizar, 5000);
+
+// filtros
+function filtrar(){
+  const txt=document.getElementById('filtroTexto').value.toLowerCase();
+  const tipo=document.getElementById('filtroTipo').value;
+  const proc=document.getElementById('filtroProc').value;
+  document.querySelectorAll('#tbody tr[data-txt]').forEach(tr=>{
+    const ok = (!txt||tr.dataset.txt.includes(txt)) && (!tipo||tr.dataset.tipo===tipo) && (!proc||tr.dataset.proc===proc);
+    tr.style.display = ok?'':'none';
+  });
+}
+['filtroTexto','filtroTipo','filtroProc'].forEach(id=>{
+  const ev = id==='filtroTexto'?'input':'change';
+  document.getElementById(id).addEventListener(ev, filtrar);
+});
+</script>
+{% endblock %}

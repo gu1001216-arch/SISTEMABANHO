@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Entrar — Tratamento de Peças{% endblock %}
+{% block content %}
+<div class="login-card">
+  <div class="login-logo"><i class="bi bi-bucket-fill"></i></div>
+  <h4 class="text-center fw-bold mb-1" style="color:#1F4E79;">Tratamento de Peças</h4>
+  <p class="text-center text-muted small mb-4">Pintura eletrostática · controle de processo</p>
+
+  {% if erro %}
+  <div class="alert alert-danger rounded-3 py-2 small">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ erro }}
+  </div>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('login') }}">
+    <div class="mb-3">
+      <label class="form-label fw-bold small">Usuário</label>
+      <input type="text" name="usuario" class="form-control" placeholder="Seu login" required autofocus autocapitalize="none">
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-bold small">Senha</label>
+      <input type="password" name="senha" class="form-control" placeholder="Sua senha" required>
+    </div>
+    <button type="submit" class="btn-primary-custom w-100 rounded-3 py-2">
+      <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
+    </button>
+  </form>
+</div>
+{% endblock %}

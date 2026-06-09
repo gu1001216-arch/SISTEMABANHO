@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Banho — Tratamento de Peças{% endblock %}
+{% block content %}
+
+<div class="row g-3">
+  <div class="col-12 col-lg-6">
+    <h6 class="fw-bold mb-2" style="color:#1F4E79;"><i class="bi bi-water me-2"></i>Em banho agora</h6>
+    <div id="emBanho" class="d-flex flex-column gap-2"><div class="text-muted small">Carregando…</div></div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <h6 class="fw-bold mb-2" style="color:#1F4E79;"><i class="bi bi-list-ol me-2"></i>Fila de espera</h6>
+    <div id="fila" class="d-flex flex-column gap-2"><div class="text-muted small">Carregando…</div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function fmtTempo(seg){
+  const h=Math.floor(seg/3600), m=Math.floor((seg%3600)/60), s=seg%60;
+  const mm=String(m).padStart(2,'0'), ss=String(s).padStart(2,'0');
+  return h>0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
+async function carregar(){
+  const r = await fetch('/api/banho/fila');
+  const j = await r.json();
+  const agora = Date.now();
+
+  const eb = document.getElementById('emBanho');
+  eb.innerHTML = j.em_banho.length ? j.em_banho.map(c=>{
+    const ini = new Date(c.banho_inicio_iso).getTime();
+    const seg = Math.max(0, Math.floor((agora-ini)/1000));
+    return `<div class="card-fluxo card-em-banho">
+      <div class="card-fluxo-info">
+        <span class="cesto-num">${c.numero_cesto}</span>
+        <div>
+          <div class="small">${c.processo||'—'} · <span class="${c.tipo==='Retrabalho'?'badge-retrabalho':'badge-normal'}">${c.tipo}</span></div>
+          <div class="cron cron-banho" data-ini="${c.banho_inicio_iso}">${fmtTempo(seg)}</div>
+        </div>
+      </div>
+      <button class="btn-stop btn-sm" onclick="finalizar(${c.id})"><i class="bi bi-stop-circle"></i> Sair do banho</button>
+    </div>`;
+  }).join('') : '<div class="text-muted small">Nenhum cesto em banho.</div>';
+
+  const fila = document.getElementById('fila');
+  fila.innerHTML = j.fila.length ? j.fila.map((c,i)=>`
+    <div class="card-fluxo">
+      <div class="card-fluxo-info">
+        <span class="fila-pos">${i+1}</span>
+        <span class="cesto-num">${c.numero_cesto}</span>
+        <div>
+          <div class="small">${c.processo||'—'}</div>
+          <div class="small text-muted">${c.quantidade||0} pç · OP ${c.op||'—'}</div>
+        </div>
+      </div>
+      <button class="btn-primary-custom btn-sm" onclick="iniciar(${c.id})"><i class="bi bi-play-fill"></i> Iniciar banho</button>
+    </div>`).join('') : '<div class="text-muted small">Fila vazia.</div>';
+}
+
+function tick(){
+  const agora = Date.now();
+  document.querySelectorAll('.cron-banho[data-ini]').forEach(el=>{
+    const ini=new Date(el.dataset.ini).getTime();
+    el.textContent=fmtTempo(Math.max(0,Math.floor((agora-ini)/1000)));
+  });
+}
+
+async function iniciar(id){
+  await fetch('/api/banho/iniciar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+  carregar();
+}
+async function finalizar(id){
+  if(!confirm('Confirmar saída do banho?')) return;
+  await fetch('/api/banho/finalizar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+  carregar();
+}
+
+carregar();
+setInterval(carregar, 4000);
+setInterval(tick, 1000);
+</script>
+{% endblock %}

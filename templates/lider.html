@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Líder — Tratamento de Peças{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h6 class="fw-bold mb-0" style="color:#1F4E79;"><i class="bi bi-clipboard-check-fill me-2"></i>Cards aguardando validação</h6>
+  <a href="{{ url_for('tela_prep') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-plus-square me-1"></i>Abrir cesto (preparação)</a>
+</div>
+
+<div id="listaLider" class="row g-3">
+  <div class="text-muted small">Carregando…</div>
+</div>
+
+<!-- Modal validação -->
+<div class="modal fade" id="modalValidar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background:#1F4E79;color:#fff;">
+        <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Validar cesto <span id="vCesto"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="vId">
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label fw-bold small">Tempo preparação (min)</label>
+            <input type="number" step="0.1" id="vMin" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">Quantidade</label>
+            <input type="number" id="vQtd" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">OP</label>
+            <input type="text" id="vOp" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">Código</label>
+            <input type="text" id="vCodigo" class="form-control form-control-sm">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold small">Descrição</label>
+            <input type="text" id="vDesc" class="form-control form-control-sm">
+          </div>
+          <div class="col-7">
+            <label class="form-label fw-bold small">Processo</label>
+            <select id="vProc" class="form-select form-select-sm">
+              <option value="">Selecione…</option>
+              {% for p in processos %}<option>{{ p }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-5">
+            <label class="form-label fw-bold small">Tipo</label>
+            <select id="vTipo" class="form-select form-select-sm">
+              <option>Normal</option><option>Retrabalho</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold small">Observação</label>
+            <textarea id="vObs" class="form-control form-control-sm" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn-primary-custom px-4" onclick="validar()"><i class="bi bi-check2-circle me-1"></i>Liberar ao banho</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let modalVal = new bootstrap.Modal(document.getElementById('modalValidar'));
+let cacheCards = [];
+
+async function carregar(){
+  const r = await fetch('/api/lider/pendentes');
+  cacheCards = await r.json();
+  const cont = document.getElementById('listaLider');
+  if(!cacheCards.length){ cont.innerHTML='<div class="text-muted small">Nenhum card aguardando.</div>'; return; }
+  cont.innerHTML = cacheCards.map(c=>`
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="kpi-card text-start" style="padding:16px;">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="cesto-num">${c.numero_cesto}</span>
+          <span class="${c.tipo==='Retrabalho'?'badge-retrabalho':'badge-normal'}">${c.tipo}</span>
+        </div>
+        <div class="small mb-1"><i class="bi bi-upc me-1"></i>OP ${c.op||'—'} · ${c.codigo||'—'}</div>
+        <div class="small text-muted mb-1">${c.descricao||'Sem descrição'}</div>
+        <div class="small mb-1"><i class="bi bi-box-seam me-1"></i>${c.quantidade||0} peças · ${c.processo||'—'}</div>
+        <div class="small text-muted mb-2"><i class="bi bi-stopwatch me-1"></i>Prep.: <strong>${c.prep_minutos} min</strong> · ${c.operador_prep}</div>
+        <button class="btn-primary-custom btn-sm w-100" onclick="abrir(${c.id})"><i class="bi bi-pencil me-1"></i>Validar</button>
+      </div>
+    </div>`).join('');
+}
+
+function abrir(id){
+  const c = cacheCards.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('vId').value = c.id;
+  document.getElementById('vCesto').textContent = c.numero_cesto;
+  document.getElementById('vMin').value = c.prep_minutos;
+  document.getElementById('vQtd').value = c.quantidade;
+  document.getElementById('vOp').value = c.op;
+  document.getElementById('vCodigo').value = c.codigo;
+  document.getElementById('vDesc').value = c.descricao;
+  document.getElementById('vProc').value = c.processo;
+  document.getElementById('vTipo').value = c.tipo;
+  document.getElementById('vObs').value = c.observacao;
+  modalVal.show();
+}
+
+async function validar(){
+  const payload = {
+    id: document.getElementById('vId').value,
+    prep_minutos: document.getElementById('vMin').value,
+    quantidade: document.getElementById('vQtd').value,
+    op: document.getElementById('vOp').value.trim(),
+    codigo: document.getElementById('vCodigo').value.trim(),
+    descricao: document.getElementById('vDesc').value.trim(),
+    processo: document.getElementById('vProc').value,
+    tipo: document.getElementById('vTipo').value,
+    observacao: document.getElementById('vObs').value.trim(),
+  };
+  const r = await fetch('/api/lider/validar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const j = await r.json();
+  if(j.sucesso){ modalVal.hide(); carregar(); }
+}
+
+carregar();
+setInterval(carregar, 4000);
+</script>
+{% endblock %}

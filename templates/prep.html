@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Preparação — Tratamento de Peças{% endblock %}
+{% block content %}
+
+<div class="row g-3">
+  <!-- Coluna: abrir novo card -->
+  <div class="col-12 col-lg-5">
+    <div class="kpi-card">
+      <h6 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-plus-square-fill me-2"></i>Abrir cesto</h6>
+      <div class="mb-3">
+        <label class="form-label fw-bold small">Número do cesto</label>
+        <div class="input-group">
+          <input type="text" id="novoCesto" class="form-control" inputmode="numeric" placeholder="Ex: 14" autofocus>
+          <button class="btn-primary-custom px-4" onclick="iniciarPrep()"><i class="bi bi-play-fill"></i> Iniciar</button>
+        </div>
+        <div class="form-text">O cronômetro de preparação começa ao iniciar.</div>
+      </div>
+      <div id="msgPrep" class="small"></div>
+    </div>
+  </div>
+
+  <!-- Coluna: cards em preparação -->
+  <div class="col-12 col-lg-7">
+    <h6 class="fw-bold mb-2" style="color:#1F4E79;"><i class="bi bi-hourglass-split me-2"></i>Em preparação</h6>
+    <div id="listaPrep" class="d-flex flex-column gap-2">
+      <div class="text-muted small">Carregando…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de finalização -->
+<div class="modal fade" id="modalFinalizar" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background:#1F4E79;color:#fff;">
+        <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i>Finalizar cesto <span id="modalCesto"></span></h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cardId">
+        <div class="mb-3">
+          <label class="form-label fw-bold small">Código de barras da OP</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+            <input type="text" id="campoOp" class="form-control" placeholder="Escaneie ou digite a OP" autocomplete="off">
+          </div>
+          <div id="msgOp" class="form-text"></div>
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label fw-bold small">Código</label>
+            <input type="text" id="campoCodigo" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold small">Quantidade</label>
+            <input type="number" id="campoQtd" class="form-control form-control-sm" inputmode="numeric">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold small">Descrição</label>
+            <input type="text" id="campoDesc" class="form-control form-control-sm">
+          </div>
+          <div class="col-12 col-sm-7">
+            <label class="form-label fw-bold small">Processo</label>
+            <select id="campoProc" class="form-select form-select-sm">
+              <option value="">Selecione…</option>
+              {% for p in processos %}<option>{{ p }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-sm-5">
+            <label class="form-label fw-bold small">Tipo</label>
+            <select id="campoTipo" class="form-select form-select-sm">
+              <option>Normal</option>
+              <option>Retrabalho</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold small">Observação</label>
+            <textarea id="campoObs" class="form-control form-control-sm" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn-primary-custom px-4" onclick="finalizarPrep()"><i class="bi bi-send-check me-1"></i>Enviar ao líder</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let modalFin = new bootstrap.Modal(document.getElementById('modalFinalizar'));
+
+function fmtTempo(seg){
+  const m = Math.floor(seg/60), s = seg%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+async function iniciarPrep(){
+  const numero = document.getElementById('novoCesto').value.trim();
+  const msg = document.getElementById('msgPrep');
+  if(!numero){ msg.innerHTML='<span class="text-danger">Informe o número do cesto.</span>'; return; }
+  const r = await fetch('/api/prep/iniciar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({numero_cesto:numero})
+  });
+  const j = await r.json();
+  if(j.sucesso){
+    document.getElementById('novoCesto').value='';
+    msg.innerHTML='<span class="text-success">Cesto iniciado.</span>';
+    carregarPrep();
+  } else {
+    msg.innerHTML=`<span class="text-danger">${j.erro}</span>`;
+  }
+}
+
+async function carregarPrep(){
+  const r = await fetch('/api/prep/ativos');
+  const cards = await r.json();
+  const cont = document.getElementById('listaPrep');
+  if(!cards.length){ cont.innerHTML='<div class="text-muted small">Nenhum cesto em preparação.</div>'; return; }
+  const agora = Date.now();
+  cont.innerHTML = cards.map(c=>{
+    const ini = new Date(c.prep_inicio_iso).getTime();
+    const seg = Math.max(0, Math.floor((agora-ini)/1000));
+    return `<div class="card-fluxo">
+      <div class="card-fluxo-info">
+        <span class="cesto-num">${c.numero_cesto}</span>
+        <div>
+          <div class="small text-muted">${c.operador_prep}</div>
+          <div class="cron" data-ini="${c.prep_inicio_iso}">${fmtTempo(seg)}</div>
+        </div>
+      </div>
+      <button class="btn-primary-custom btn-sm" onclick="abrirFinalizar(${c.id}, '${c.numero_cesto}')">
+        <i class="bi bi-stop-fill"></i> Finalizar
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function tickCronos(){
+  const agora = Date.now();
+  document.querySelectorAll('.cron[data-ini]').forEach(el=>{
+    const ini = new Date(el.dataset.ini).getTime();
+    el.textContent = fmtTempo(Math.max(0, Math.floor((agora-ini)/1000)));
+  });
+}
+
+function abrirFinalizar(id, cesto){
+  document.getElementById('cardId').value = id;
+  document.getElementById('modalCesto').textContent = cesto;
+  ['campoOp','campoCodigo','campoQtd','campoDesc','campoObs'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('campoProc').value='';
+  document.getElementById('campoTipo').value='Normal';
+  document.getElementById('msgOp').innerHTML='';
+  modalFin.show();
+  setTimeout(()=>document.getElementById('campoOp').focus(), 400);
+}
+
+// Busca a OP na lista mestra (dispara ao terminar de escanear / Enter / blur)
+let opTimer;
+document.getElementById('campoOp').addEventListener('input', e=>{
+  clearTimeout(opTimer);
+  opTimer = setTimeout(buscarOp, 350); // leitores de código de barras "digitam" rápido
+});
+document.getElementById('campoOp').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ e.preventDefault(); buscarOp(); }
+});
+
+async function buscarOp(){
+  const op = document.getElementById('campoOp').value.trim();
+  const msg = document.getElementById('msgOp');
+  if(!op){ return; }
+  const r = await fetch('/api/buscar_op/'+encodeURIComponent(op));
+  const j = await r.json();
+  if(j.encontrado){
+    document.getElementById('campoCodigo').value = j.codigo || '';
+    document.getElementById('campoDesc').value   = j.descricao || '';
+    document.getElementById('campoQtd').value    = j.quantidade || '';
+    msg.innerHTML = '<span class="text-success">OP encontrada — campos preenchidos (editáveis).</span>';
+  } else {
+    msg.innerHTML = '<span class="text-warning">OP não encontrada na lista mestra. Preencha manualmente.</span>';
+  }
+}
+
+async function finalizarPrep(){
+  const payload = {
+    id: document.getElementById('cardId').value,
+    op: document.getElementById('campoOp').value.trim(),
+    codigo: document.getElementById('campoCodigo').value.trim(),
+    descricao: document.getElementById('campoDesc').value.trim(),
+    quantidade: document.getElementById('campoQtd').value,
+    processo: document.getElementById('campoProc').value,
+    tipo: document.getElementById('campoTipo').value,
+    observacao: document.getElementById('campoObs').value.trim(),
+  };
+  const r = await fetch('/api/prep/finalizar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const j = await r.json();
+  if(j.sucesso){ modalFin.hide(); carregarPrep(); }
+  else { document.getElementById('msgOp').innerHTML=`<span class="text-danger">${j.erro}</span>`; }
+}
+
+carregarPrep();
+setInterval(carregarPrep, 5000);  // sincroniza com o servidor
+setInterval(tickCronos, 1000);    // cronômetro suave
+</script>
+{% endblock %}

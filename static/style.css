@@ -1,0 +1,66 @@
+/* ── Variáveis ──────────────────────────────────────────────── */
+:root{
+  --azul-primario:#1F4E79; --azul-sec:#2E75B6; --verde:#28a745; --verde-claro:#e8f5e9;
+  --laranja:#fd7e14; --laranja-claro:#fff3e0; --vermelho:#dc3545; --roxo:#7b1fa2;
+  --cinza-bg:#f0f4f8; --branco:#fff; --sombra:0 4px 20px rgba(0,0,0,.08); --raio:14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--cinza-bg);font-family:'Segoe UI',Tahoma,Helvetica,Arial,sans-serif;color:#333;-webkit-text-size-adjust:100%;overflow-x:hidden;}
+
+/* ── Navbar ─────────────────────────────────────────────────── */
+.navbar-custom{background:linear-gradient(135deg,var(--azul-primario),var(--azul-sec));box-shadow:0 2px 12px rgba(0,0,0,.25);padding:10px 16px;}
+.badge-perfil{background:rgba(255,255,255,.2);color:#fff;border-radius:20px;padding:2px 12px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── Botões ─────────────────────────────────────────────────── */
+.btn-primary-custom{background:linear-gradient(135deg,var(--azul-primario),var(--azul-sec));color:#fff;border:none;border-radius:10px;padding:10px 20px;font-weight:700;transition:all .2s;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:4px;}
+.btn-primary-custom:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(31,78,121,.4);color:#fff;}
+.btn-primary-custom.btn-sm{min-height:38px;padding:6px 14px;font-size:.85rem;}
+.btn-stop{background:linear-gradient(135deg,#c82333,var(--vermelho));color:#fff;border:none;border-radius:10px;padding:8px 16px;font-weight:700;min-height:40px;transition:all .2s;}
+.btn-stop:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(220,53,69,.4);color:#fff;}
+
+/* ── KPI Cards ──────────────────────────────────────────────── */
+.kpi-card{background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra);padding:20px;text-align:center;}
+.kpi-valor{font-size:2rem;font-weight:800;color:var(--azul-primario);}
+.kpi-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-top:4px;}
+
+/* ── Cards de fluxo (prep / banho) ──────────────────────────── */
+.card-fluxo{background:var(--branco);border-radius:var(--raio);box-shadow:var(--sombra);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.card-fluxo-info{display:flex;align-items:center;gap:14px;}
+.card-em-banho{border:2px solid var(--azul-sec);background:#f5f9ff;}
+.cesto-num{display:inline-flex;align-items:center;justify-content:center;min-width:48px;height:48px;background:var(--azul-primario);color:#fff;border-radius:12px;font-size:1.4rem;font-weight:800;padding:0 8px;}
+.cesto-num-sm{font-size:1.1rem;font-weight:800;color:var(--azul-primario);}
+.fila-pos{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:#e9ecef;color:#555;border-radius:50%;font-size:.8rem;font-weight:700;}
+.cron{font-size:1.5rem;font-weight:800;color:var(--laranja);font-variant-numeric:tabular-nums;letter-spacing:1px;}
+.cron-banho{color:var(--azul-sec);}
+
+/* ── Andamento dashboard ────────────────────────────────────── */
+.and-item{background:#fafbfd;border-radius:10px;padding:10px 12px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+
+/* ── Tabela ─────────────────────────────────────────────────── */
+.tabela-historico{width:100%;border-collapse:collapse;font-size:.86rem;}
+.tabela-historico th{background:var(--azul-primario);color:#fff;padding:10px 12px;text-align:center;position:sticky;top:0;}
+.tabela-historico td{padding:8px 12px;text-align:center;border-bottom:1px solid #f0f4f8;}
+.tabela-historico tr:hover td{background:#f8fbff;}
+.tabela-historico tr.linha-retrab td{background:var(--laranja-claro);}
+
+/* ── Badges ─────────────────────────────────────────────────── */
+.badge-normal{background:var(--verde-claro);color:#155724;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;}
+.badge-retrabalho{background:var(--laranja-claro);color:#7c3a00;border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;}
+.badge-perfil-tab{border-radius:20px;padding:3px 10px;font-size:.72rem;font-weight:700;text-transform:capitalize;}
+.perfil-admin{background:#f8d7da;color:#842029;}
+.perfil-lider{background:#e7d6f5;color:#5a1a82;}
+.perfil-banho{background:#cfe2ff;color:#084298;}
+.perfil-prep{background:var(--verde-claro);color:#155724;}
+
+/* ── Login ──────────────────────────────────────────────────── */
+.login-card{max-width:420px;margin:60px auto;background:var(--branco);border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,.12);padding:40px;}
+.login-logo{text-align:center;font-size:3rem;color:var(--azul-primario);margin-bottom:8px;}
+
+/* ── Inputs ─────────────────────────────────────────────────── */
+.form-control,.form-select{border-radius:10px;border:2px solid #dee2e6;font-size:16px;min-height:46px;padding:10px 14px;transition:border-color .2s;}
+.form-control-sm,.form-select-sm{min-height:40px;font-size:15px;padding:6px 10px;}
+.form-control:focus,.form-select:focus{border-color:var(--verde);box-shadow:0 0 0 3px rgba(40,167,69,.15);outline:none;}
+
+/* ── Responsivo ─────────────────────────────────────────────── */
+@media(max-width:768px){.kpi-valor{font-size:1.6rem;}.login-card{margin:20px;padding:28px 20px;}.cesto-num{min-width:42px;height:42px;font-size:1.2rem;}}
+@media(max-width:480px){.kpi-valor{font-size:1.3rem;}.tabela-historico{font-size:.76rem;}.cron{font-size:1.3rem;}}

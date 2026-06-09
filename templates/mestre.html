@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Lista Mestra — Tratamento de Peças{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <h5 class="fw-bold mb-3" style="color:#1F4E79;"><i class="bi bi-table me-2"></i>Lista mestra (OP → código · descrição · quantidade)</h5>
+
+    {% if msg %}<div class="alert alert-info rounded-3 py-2 small"><i class="bi bi-info-circle-fill me-2"></i>{{ msg }}</div>{% endif %}
+
+    <div class="kpi-card mb-4">
+      <h6 class="fw-bold mb-2" style="color:#1F4E79;"><i class="bi bi-upload me-2"></i>Importar planilha</h6>
+      <p class="small text-muted mb-3">Aceita <strong>.xlsx</strong> ou <strong>.csv</strong> com colunas nesta ordem: <code>OP</code>, <code>Código</code>, <code>Descrição</code>, <code>Quantidade</code>. OPs já existentes são atualizadas; novas são adicionadas.</p>
+      <form method="POST" enctype="multipart/form-data">
+        <div class="input-group">
+          <input type="file" class="form-control" name="arquivo" accept=".xlsx,.csv" required>
+          <button class="btn-primary-custom px-4" type="submit"><i class="bi bi-cloud-arrow-up me-1"></i>Importar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="kpi-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="fw-bold mb-0" style="color:#1F4E79;">Itens cadastrados</h6>
+        <span class="badge bg-primary">{{ total_itens }} OPs</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="tabela-historico">
+          <thead><tr><th>OP</th><th>Código</th><th>Descrição</th><th>Qtd</th></tr></thead>
+          <tbody>
+            {% for i in amostra %}
+            <tr><td><strong>{{ i.op }}</strong></td><td>{{ i.codigo }}</td><td><small>{{ i.descricao }}</small></td><td>{{ i.quantidade }}</td></tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted py-3">Nenhum item importado ainda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if total_itens > amostra|length %}<p class="small text-muted mt-2 mb-0">Mostrando os primeiros {{ amostra|length }} de {{ total_itens }}.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
